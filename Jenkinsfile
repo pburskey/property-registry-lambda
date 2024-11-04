@@ -28,6 +28,18 @@ pipeline {
                 }
             }
         }
+
+        stage("Release") {
+                    when {
+                        expression { params.RELEASE }
+                    }
+                    steps {
+                        sh "mvn -B release:prepare"
+                        sh "mvn -B release:perform"
+                    }
+                }
+    }
+
         post {
             always {
                 deleteDir()
