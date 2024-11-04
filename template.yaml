@@ -1,0 +1,125 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: property_configuration
+
+
+Globals:
+  Function:
+    Runtime: java17
+    MemorySize: 512
+    Timeout: 3
+    Environment:
+      Variables:
+        PROPERTY_TABLE: !Ref PropertyTable
+
+Resources:
+  PropertyTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+
+  PipelineStartBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-${AWS::AccountId}-${AWS::Region}-start
+
+  FanOutTopic:
+    Type: AWS::SNS::Topic
+
+
+  PropertySaveLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.zip
+      FunctionName: PropertySaveLambda
+      Handler: com.burskey.property.api.Save::handleRequest
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PropertyTable
+      Events:
+        ApiEvents:
+          Type: Api
+          Properties:
+            Path: /save
+            Method: POST
+
+  PropertyFindByIDLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.zip
+      FunctionName: PropertyFindByIDLambda
+      Handler: com.burskey.property.api.GetByID::handleRequest
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref PropertyTable
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /{id}
+            Method: get
+            RequestParameters:
+              - method.request.path.id:
+                  Required: true
+                  Caching: false
+
+  PropertyFindByNameCategoryLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.zip
+      FunctionName: PropertyFindByNameCategoryLambda
+      Handler: com.burskey.property.api.GetByNameCategory::handleRequest
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref PropertyTable
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /find
+            Method: get
+            RequestParameters:
+              - method.request.querystring.name:
+                  Required: false
+                  Caching: false
+              - method.request.querystring.category:
+                  Required: false
+                  Caching: false
+
+  SingleEventLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.zip
+      FunctionName: SingleEventLambda
+      Handler: com.burskey.property.api.SNSEventHandler::handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PropertyTable
+      Events:
+        SnsEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref FanOutTopic
+
+  S3EventLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.zip
+      FunctionName: S3EventLambda
+      Handler: com.burskey.property.api.S3EventsHandler::handler
+      Environment:
+        Variables:
+          FAN_OUT_TOPIC: !Ref FanOutTopic
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Sub ${AWS::StackName}-${AWS::AccountId}-${AWS::Region}-start
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt FanOutTopic.TopicName
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref PipelineStartBucket
+            Events: s3:ObjectCreated:*
