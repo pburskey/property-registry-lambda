@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.burskey.property.dao.Dynamo;
 import com.burskey.property.domain.Property;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpStatus;
@@ -11,6 +12,15 @@ import org.apache.http.HttpStatus;
 import java.util.List;
 
 public class GetByNameCategory extends AbstractLambda {
+
+
+    public GetByNameCategory() {
+        super();
+    }
+
+    public GetByNameCategory(Dynamo dynamo) {
+        super(dynamo);
+    }
 
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
 
