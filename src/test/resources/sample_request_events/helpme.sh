@@ -1,0 +1,1 @@
+sam local generate-event apigateway http-api-proxy >> sample.json
