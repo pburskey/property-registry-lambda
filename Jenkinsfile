@@ -4,11 +4,6 @@ pipeline {
         maven "Maven"
     }
 
-    environment {
-        GO114MODULE = 'on'
-        CGO_ENABLED = 0
-        GOPATH = "${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_ID}"
-    }
     options {
         skipStagesAfterUnstable()
     }
@@ -33,18 +28,6 @@ pipeline {
                 }
             }
         }
-
-        stage("Release") {
-                    when {
-                        expression { params.RELEASE }
-                    }
-                    steps {
-                        sh "mvn -B release:prepare"
-                        sh "mvn -B release:perform"
-                    }
-                }
-    }
-
         post {
             always {
                 deleteDir()
