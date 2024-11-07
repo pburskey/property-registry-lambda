@@ -1,0 +1,13 @@
+default:
+  deploy:
+    parameters:
+      s3_bucket: pburskey-home
+      stack_name: propertyconfiguration
+      resolve_s3: false
+      s3_prefix: propertyconfiguration
+      region: us-east-2
+      confirm_changeset: false
+      capabilities: CAPABILITY_IAM
+      parameter_overrides: Environment="dev"
+      image_repositories: []
+version: 0.1

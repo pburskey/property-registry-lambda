@@ -20,9 +20,7 @@ cd $mavenBase
 mvn package
 
 sam deploy \
---s3-bucket $aws_bucket \
---stack-name propertyconfiguration \
---capabilities CAPABILITY_IAM
+--s3-bucket $aws_bucket
 
 cd $scriptBase
 . aws_build_url_for_function.sh PropertyFindByIDLambda / 2>&1 | tee -a $scriptBase/$resources_file

@@ -44,7 +44,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: target/lambda.zip
-      FunctionName: PropertySaveLambda
+      FunctionName: !Sub ${Environment}-PropertySaveLambda
       Handler: com.burskey.property.api.Save::handleRequest
       Policies:
         - DynamoDBCrudPolicy:
