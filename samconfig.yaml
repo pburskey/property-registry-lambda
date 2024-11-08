@@ -10,4 +10,5 @@ default:
       capabilities: CAPABILITY_IAM
       parameter_overrides: Environment="dev"
       image_repositories: []
+
 version: 0.1

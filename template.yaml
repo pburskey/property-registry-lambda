@@ -2,17 +2,40 @@ AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: property_configuration
 
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: realworld-serverless-application-backend-api
+    Description: >-
+      This template creates API Gateway and Lambda resources for the backend service.
+    Author: Patrick Burskey
+    SpdxLicenseId: Apache-2.0
+    Labels: [ github, serverless, sam ]
+    HomePageUrl: https://github.com/pburskey/property-registry-lambda
+    SemanticVersion: 1.0.1
+    SourceCodeUrl: https://github.com/pburskey/property-registry-lambda
+    #    LicenseUrl: ../../../LICENSE
+    ReadmeUrl: README.md
+
+
 Parameters:
-  Environment:
+  Stage:
     Type: String
+    Description: The stage where the application is running in, e.g., dev, prod.
     Default: 'dev'
     AllowedValues:
       - dev
+      - stage
+      - prod
 Conditions:
-  IsDevEnv:
+  IsProd:
+    !Equals [ !Ref Stage, "prod" ]
+  IsDev:
     Fn::Equals:
       - 'dev'
-      - !Ref Environment
+      - !Ref Stage
+
+
 
 Globals:
   Function:
@@ -22,6 +45,7 @@ Globals:
     Environment:
       Variables:
         PROPERTY_TABLE: !Ref PropertyTable
+        STAGE: !Ref Stage
 
 Resources:
   PropertyTable:
@@ -39,12 +63,18 @@ Resources:
   FanOutTopic:
     Type: AWS::SNS::Topic
 
+  BasicAWSApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: Basic AWS Api Gateway
+      StageName: !Ref Stage
+
 
   PropertySaveLambda:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: target/lambda.zip
-      FunctionName: !Sub ${Environment}-PropertySaveLambda
+      FunctionName: PropertySaveLambda
       Handler: com.burskey.property.api.Save::handleRequest
       Policies:
         - DynamoDBCrudPolicy:
@@ -53,6 +83,7 @@ Resources:
         ApiEvents:
           Type: Api
           Properties:
+            RestApiId: !Ref BasicAWSApiGateway
             Path: /save
             Method: POST
 
@@ -69,6 +100,7 @@ Resources:
         ApiEvent:
           Type: Api
           Properties:
+            RestApiId: !Ref BasicAWSApiGateway
             Path: /{id}
             Method: get
             RequestParameters:
@@ -89,6 +121,7 @@ Resources:
         ApiEvent:
           Type: Api
           Properties:
+            RestApiId: !Ref BasicAWSApiGateway
             Path: /find
             Method: get
             RequestParameters:
@@ -134,3 +167,18 @@ Resources:
           Properties:
             Bucket: !Ref PipelineStartBucket
             Events: s3:ObjectCreated:*
+
+
+Outputs:
+  BasicAWSApiGateway:
+    Description: 'API Gateway endpoint URL for stage: ${Stage} for Hello World function'
+    Value: !Sub 'https://${BasicAWSApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}'
+  BasicAWSApiGatewayRestApiId:
+    Description: 'API Gateway ARN for Basic AWS API Gateway'
+    Value: !Ref BasicAWSApiGateway
+    Export:
+      Name: BasicAWSApiGateway-RestApiId
+  BasicAWSApiGatewayRootResourceId:
+    Value: !GetAtt BasicAWSApiGateway.RootResourceId
+    Export:
+      Name: BasicAWSApiGateway-RootResourceId
