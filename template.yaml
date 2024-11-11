@@ -27,6 +27,7 @@ Parameters:
       - dev
       - stage
       - prod
+
 Conditions:
   IsProd:
     !Equals [ !Ref Stage, "prod" ]
@@ -67,7 +68,10 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       Name: Basic AWS Api Gateway
+      Description: Basic AWS Api Gateway
+      OpenApiVersion: 3.0.1
       StageName: !Ref Stage
+      DisableExecuteApiEndpoint: false
 
 
   PropertySaveLambda:

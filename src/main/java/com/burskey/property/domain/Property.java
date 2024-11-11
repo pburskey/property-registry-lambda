@@ -1,5 +1,7 @@
 package com.burskey.property.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class Property {
     public String id;
     public String category;
@@ -60,6 +62,25 @@ public class Property {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+
+    @JsonIgnore
+    public boolean isValid(){
+        if (this.getName() == null || this.getName().isEmpty()){
+            throw new ValidationException("Name is missing");
+        }
+
+        if (this.getValue() == null || this.getValue().isEmpty()){
+            throw new ValidationException("Value is missing");
+        }
+
+        if (this.getCategory() == null || this.getCategory().isEmpty()){
+            throw new ValidationException("Category is missing");
+        }
+
+        return true;
+
     }
 
 
