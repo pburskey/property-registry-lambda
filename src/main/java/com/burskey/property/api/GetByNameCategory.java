@@ -38,21 +38,23 @@ public class GetByNameCategory extends AbstractLambda {
                 name = event.getQueryStringParameters().get("name");
                 category = event.getQueryStringParameters().get("category");
 
-                List<Property> aList = null;
-                if (name != null && category != null) {
-                    aList = dynamo.find(name, category);
-                } else if (category != null) {
-                    aList = dynamo.findByCategory(category);
-                }
+                if (category == null || category.isEmpty()) {
+                    response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+                    response.setBody("Missing category");
+                } else {
 
-                if (aList != null && aList.size() > 0) {
-                    response.setBody(new ObjectMapper().writeValueAsString(aList));
-                }
+                    List<Property> aList = null;
+                    if (name != null && category != null) {
+                        aList = dynamo.find(name, category);
+                    } else if (category != null) {
+                        aList = dynamo.findByCategory(category);
+                    }
 
+                    if (aList != null && aList.size() > 0) {
+                        response.setBody(new ObjectMapper().writeValueAsString(aList));
+                    }
+                }
             }
-
-//            response.setBody("Searching for name: " + name + " and category: " + category);
-
 
         } catch (Exception e) {
             logger.log(e.getMessage());

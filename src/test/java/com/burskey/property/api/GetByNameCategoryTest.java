@@ -43,6 +43,22 @@ class GetByNameCategoryTest extends AbstractTest{
     }
 
     @Test
+    void handleRequest_a_negative() {
+
+        File file = FindFile("classpath:sample_request_events/GetByNameCategory.json");
+        APIGatewayProxyRequestEvent event = EventLoader.loadApiGatewayRestEvent(file.getPath());
+
+        event.getQueryStringParameters().remove("category");
+
+        APIGatewayProxyResponseEvent response = this.getByNameCategory.handleRequest(event, context);
+        assertNotNull(response);
+        assertEquals(response.getStatusCode(), 400);
+        assertTrue(response.getBody().contains("Missing category"));
+
+    }
+
+
+    @Test
     void handleRequest_b() {
 
         File file = FindFile("classpath:sample_request_events/GetByNameCategory2.json");

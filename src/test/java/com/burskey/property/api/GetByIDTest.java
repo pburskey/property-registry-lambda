@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 
 import static com.burskey.property.FileResourceLoader.FindFile;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -40,4 +40,20 @@ class GetByIDTest extends AbstractTest{
         assertNotNull(response);
 
     }
+
+    @Test
+    void handleRequest_no_id() throws Exception {
+
+        File file = FindFile("classpath:sample_request_events/GetByID.json");
+        APIGatewayProxyRequestEvent event = EventLoader.loadApiGatewayRestEvent(file.getPath());
+//
+        event.getPathParameters().remove("id");
+
+        APIGatewayProxyResponseEvent response = this.getByID.handleRequest(event, context);
+        assertNotNull(response);
+        assertEquals(response.getStatusCode(), 400);
+        assertTrue(response.getBody().contains("Missing ID"));
+
+    }
+
 }

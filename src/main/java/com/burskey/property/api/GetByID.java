@@ -34,9 +34,16 @@ public class GetByID extends AbstractLambda {
                 id = event.getPathParameters().get("id");
             }
 
-            response.setBody("Searching for ID: " + id);
-            Property property = this.dynamo.find(id);
-            response.setBody(new ObjectMapper().writeValueAsString(property));
+            if (id == null || id.isEmpty()) {
+                response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+                response.setBody("Missing ID");
+            }
+            else{
+
+                response.setBody("Searching for ID: " + id);
+                Property property = this.dynamo.find(id);
+                response.setBody(new ObjectMapper().writeValueAsString(property));
+            }
 
         } catch (Exception e) {
             logger.log(e.getMessage());
