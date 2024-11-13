@@ -21,7 +21,7 @@ public class SNSEventHandler extends AbstractLambda {
             final Property property = this.mapper.readValue(record.getSNS().getMessage(), Property.class);
 
             this.dynamo.save(property);
-            context.getLogger().log("Saved: " + property.getName() + " id: " + property.getId());
+            context.getLogger().log("Saved: " + property.getName() + " id: " + property.getCategory());
 
         } catch (IOException e) {
             throw new RuntimeException(e);

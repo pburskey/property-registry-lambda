@@ -33,9 +33,8 @@ class GetByNameCategoryTest extends AbstractTest{
         File file = FindFile("classpath:sample_request_events/GetByNameCategory.json");
         APIGatewayProxyRequestEvent event = EventLoader.loadApiGatewayRestEvent(file.getPath());
 //        APIGatewayProxyRequestEvent event = mapper.readValue(data, APIGatewayProxyRequestEvent.class);
-        List<Property> list = new ArrayList<>();
-        list.add(new Property());
-        when(this.dao.find(anyString(),anyString())).thenReturn(list);
+
+        when(this.dao.find(anyString(),anyString())).thenReturn(new Property());
 
         APIGatewayProxyResponseEvent response = this.getByNameCategory.handleRequest(event, context);
         assertNotNull(response);

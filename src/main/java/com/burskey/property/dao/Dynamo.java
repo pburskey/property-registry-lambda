@@ -4,6 +4,8 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.document.*;
 import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
+import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec;
+import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.UpdateItemRequest;
@@ -13,6 +15,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,54 +34,63 @@ public class Dynamo {
         this.tableName = tableName;
     }
 
-    public List<Property> find(String name, String category) {
-        List<Property> aList = new ArrayList<>();
-//
-//        Map<String, String> expressionAttributesNames = new HashMap<>();
-//        expressionAttributesNames.put("#category", "category");
-//        expressionAttributesNames.put("#name", "name");
-////
-////        Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
-////        expressionAttributeValues.put(":categoryValue", new AttributeValue().withS(category));
-////        expressionAttributeValues.put(":name", new AttributeValue().withS(name));
-//
-//
-//        ValueMap valueMap = new ValueMap();
-//        valueMap.withString(":category", category);
-//        valueMap.withString(":name", name);
-//
-//
-//        QuerySpec querySpec = new QuerySpec()
-//                .withKeyConditionExpression("#category = :category and #name = :name")
-//                .withValueMap(valueMap)
-//                .withNameMap(expressionAttributesNames)
-//                .withConsistentRead(true);
-//
-//        Index index = this.dynamoDB.getTable(tableName).getIndex("categoryAndName");
-//        ItemCollection<QueryOutcome>  outcomes= index.query(querySpec);
+    public Property find(String name, String category) {
 
-        ItemCollection<ScanOutcome>  outcomes= this.dynamoDB.getTable(this.tableName).scan();
+        Property property = null;
+
+        Map<String, String> expressionAttributesNames = new HashMap<>();
+        expressionAttributesNames.put("#category", "category");
+        expressionAttributesNames.put("#name", "name");
+//
+//        Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
+//        expressionAttributeValues.put(":categoryValue", new AttributeValue().withS(category));
+//        expressionAttributeValues.put(":name", new AttributeValue().withS(name));
+
+
+        ValueMap valueMap = new ValueMap();
+        valueMap.withString(":category", category);
+        valueMap.withString(":name", name);
+
+
+        QuerySpec querySpec = new QuerySpec()
+                .withKeyConditionExpression("#category = :category and #name = :name")
+                .withValueMap(valueMap)
+                .withNameMap(expressionAttributesNames)
+                .withConsistentRead(true);
+
+        ItemCollection<QueryOutcome>  outcomes= this.dynamoDB.getTable(this.tableName).query(querySpec);
         if (outcomes != null) {
+            List<Property> list = new ArrayList<>();
             outcomes.forEach(outcome -> {
                 String candidateName = outcome.get("name").toString();
                 String candidateCategory = outcome.get("category").toString();
                 if (name.equalsIgnoreCase(candidateName) && category.equalsIgnoreCase(candidateCategory)) {
-                    aList.add(this.find(outcome.get("id").toString()));
+                    list.add( this.find(candidateName, candidateCategory));
                 }
 
             });
+            if (list.size() == 1) {
+                property = list.get(0);
+            }
+
         }
 
 
 
 
+        return property;
+    }
 
+    public List<Property> findByCategory( String category) {
+        List<Property> aList = new ArrayList<>();
+        ScanRequest scanRequest = new ScanRequest().withTableName(this.tableName);
+
+//
 //        ItemCollection<ScanOutcome>  outcomes= this.dynamoDB.getTable(this.tableName).scan();
 //        if (outcomes != null) {
 //            outcomes.forEach(outcome -> {
-//                String candidateName = outcome.get("name").toString();
 //                String candidateCategory = outcome.get("category").toString();
-//                if (name.equalsIgnoreCase(candidateName) && category.equalsIgnoreCase(candidateCategory)) {
+//                if ( category.equalsIgnoreCase(candidateCategory)) {
 //                    aList.add(this.find(outcome.get("id").toString()));
 //                }
 //
@@ -88,35 +100,14 @@ public class Dynamo {
         return aList;
     }
 
-    public List<Property> findByCategory( String category) {
-        List<Property> aList = new ArrayList<>();
-        ScanRequest scanRequest = new ScanRequest().withTableName(this.tableName);
-
-
-        ItemCollection<ScanOutcome>  outcomes= this.dynamoDB.getTable(this.tableName).scan();
-        if (outcomes != null) {
-            outcomes.forEach(outcome -> {
-                String candidateCategory = outcome.get("category").toString();
-                if ( category.equalsIgnoreCase(candidateCategory)) {
-                    aList.add(this.find(outcome.get("id").toString()));
-                }
-
-            });
-        }
-
-        return aList;
-    }
-
 
     public Property save(Property aProperty) {
         if (aProperty != null){
-            if (aProperty.getId() == null){
-                aProperty.setId(java.util.UUID.randomUUID().toString());
-
+            if (this.find(aProperty.getName(), aProperty.getCategory()) == null)
+            {
                 final Item item = new Item()
-                        .withPrimaryKey("id", aProperty.getId())
+                        .withPrimaryKey("category", aProperty.getCategory())
                         .withString("name", aProperty.getName())
-                        .withString("category", aProperty.getCategory())
                         .withString("description", aProperty.getDescription())
                         .withString("value", aProperty.getValue());
 
@@ -125,11 +116,13 @@ public class Dynamo {
             }else{
                 UpdateItemRequest updateItemRequest = new UpdateItemRequest();
                 updateItemRequest.setTableName(this.tableName);
-                updateItemRequest.addKeyEntry("id", new AttributeValue().withS(aProperty.getId()));
+                updateItemRequest.addKeyEntry("category", new AttributeValue().withS(aProperty.getCategory()));
+                updateItemRequest.addKeyEntry("#name", new AttributeValue().withS(aProperty.getName()));
                 updateItemRequest.addExpressionAttributeValuesEntry(":description", new AttributeValue().withS(aProperty.getDescription()));
                 updateItemRequest.addExpressionAttributeValuesEntry(":value", new AttributeValue().withS(aProperty.getValue()));
                 updateItemRequest.withUpdateExpression("set #d = :description , #v = :value");
                 updateItemRequest.addExpressionAttributeNamesEntry("#v", "value");
+                updateItemRequest.addExpressionAttributeNamesEntry("#name", "name");
                 updateItemRequest.addExpressionAttributeNamesEntry("#d","description");
 
                 try{
@@ -149,21 +142,4 @@ public class Dynamo {
     }
 
 
-
-    public Property find(String id) {
-
-        GetItemSpec spec = new GetItemSpec();
-        spec.withPrimaryKey("id", id);
-        final Table table = this.dynamoDB.getTable(this.tableName);
-
-        Item item = table.getItem(spec);
-        Property aProperty = null;
-        if (item != null) {
-            Map<String, Object> aMap = item.asMap();
-            aProperty = mapper.convertValue(aMap, Property.class);
-        }
-
-
-        return aProperty;
-    }
 }

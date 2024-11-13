@@ -30,19 +30,16 @@ public class CompositeCrudHandler extends AbstractLambda {
         } else if (event.getPath().endsWith("/find")){
             GetByNameCategory getByNameCategory = new GetByNameCategory(this.dynamo);
             return getByNameCategory.handleRequest(event, context);
-        } else {
-            GetByID getByID = new GetByID(this.dynamo);
-            return getByID.handleRequest(event, context);
         }
 
-//
-//        APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
-//        response.setIsBase64Encoded(false);
-//        response.setStatusCode(200);
-//        response.setBody("cool");
-//
-//
-//        return response;
+
+        APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
+        response.setIsBase64Encoded(false);
+        response.setStatusCode(200);
+        response.setBody(null);
+
+
+        return response;
 
     }
 

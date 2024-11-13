@@ -52,18 +52,15 @@ Resources:
   PropertyTable:
     Type: AWS::DynamoDB::Table
     Properties:
+      ProvisionedThroughput:
+        ReadCapacityUnits: '5'
+        WriteCapacityUnits: '5'
       AttributeDefinitions:
         -
           AttributeName: "category"
           AttributeType: "S"
         -
           AttributeName: "name"
-          AttributeType: "S"
-        -
-          AttributeName: "value"
-          AttributeType: "S"
-        -
-          AttributeName: "description"
           AttributeType: "S"
       KeySchema:
         -
@@ -138,27 +135,6 @@ Resources:
             RestApiId: !Ref BasicAWSApiGateway
             Path: /save
             Method: POST
-
-  PropertyFindByIDLambda:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: target/lambda.zip
-      FunctionName: PropertyFindByIDLambda
-      Handler: com.burskey.property.api.GetByID::handleRequest
-      Policies:
-        - DynamoDBReadPolicy:
-            TableName: !Ref PropertyTable
-      Events:
-        ApiEvent:
-          Type: Api
-          Properties:
-            RestApiId: !Ref BasicAWSApiGateway
-            Path: /{id}
-            Method: get
-            RequestParameters:
-              - method.request.path.id:
-                  Required: true
-                  Caching: false
 
   PropertyFindByNameCategoryLambda:
     Type: AWS::Serverless::Function
