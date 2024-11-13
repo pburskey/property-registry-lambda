@@ -50,11 +50,38 @@ Globals:
 
 Resources:
   PropertyTable:
-    Type: AWS::Serverless::SimpleTable
+    Type: AWS::DynamoDB::Table
     Properties:
-      PrimaryKey:
-        Name: id
-        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: '5'
+        WriteCapacityUnits: '5'
+      AttributeDefinitions:
+        -
+          AttributeName: "category"
+          AttributeType: "S"
+        -
+          AttributeName: "name"
+          AttributeType: "S"
+      KeySchema:
+        -
+          AttributeName: "category"
+          KeyType: "HASH"
+        -
+          AttributeName: "name"
+          KeyType: "RANGE"
+#      GlobalSecondaryIndexes:
+#        -
+#          IndexName: "GSI"
+#          KeySchema:
+#            -
+#              AttributeName: "TicketSales"
+#              KeyType: "HASH"
+#          Projection:
+#            ProjectionType: "KEYS_ONLY"
+#          ProvisionedThroughput:
+#            ReadCapacityUnits: 5
+#            WriteCapacityUnits: 5
+
 
   PipelineStartBucket:
     Type: AWS::S3::Bucket
@@ -108,27 +135,6 @@ Resources:
             RestApiId: !Ref BasicAWSApiGateway
             Path: /save
             Method: POST
-
-  PropertyFindByIDLambda:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: target/lambda.zip
-      FunctionName: PropertyFindByIDLambda
-      Handler: com.burskey.property.api.GetByID::handleRequest
-      Policies:
-        - DynamoDBReadPolicy:
-            TableName: !Ref PropertyTable
-      Events:
-        ApiEvent:
-          Type: Api
-          Properties:
-            RestApiId: !Ref BasicAWSApiGateway
-            Path: /{id}
-            Method: get
-            RequestParameters:
-              - method.request.path.id:
-                  Required: true
-                  Caching: false
 
   PropertyFindByNameCategoryLambda:
     Type: AWS::Serverless::Function

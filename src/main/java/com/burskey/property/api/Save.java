@@ -36,7 +36,7 @@ public class Save extends AbstractLambda {
                 Property property = mapper.readValue(event.getBody(), Property.class);
                 if (property != null && property.isValid()) {
                     this.dynamo.save(property);
-                    response.setBody(property.getId());
+//                    response.setBody(property.getId());
                 }
 
             } catch (ValidationException e) {

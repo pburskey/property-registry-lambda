@@ -9,6 +9,7 @@ import com.burskey.property.domain.Property;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpStatus;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class GetByNameCategory extends AbstractLambda {
@@ -25,7 +26,7 @@ public class GetByNameCategory extends AbstractLambda {
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
 
         LambdaLogger logger = context.getLogger();
-//        logger.log("Event Details:" + event);
+        logger.log("Event Details:" + event);
 
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
         response.setIsBase64Encoded(false);
@@ -45,7 +46,14 @@ public class GetByNameCategory extends AbstractLambda {
 
                     List<Property> aList = null;
                     if (name != null && category != null) {
-                        aList = dynamo.find(name, category);
+                        logger.log("Searching for category: "+category + " name: " + name);
+                        Property property = dynamo.find(name, category);
+                        logger.log("Found Property: " + (property == null ? "No":property.getCategory()));
+                        if (property != null) {
+                            aList = new ArrayList();
+                            aList.add(property);
+                        }
+
                     } else if (category != null) {
                         aList = dynamo.findByCategory(category);
                     }
