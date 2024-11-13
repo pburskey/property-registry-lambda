@@ -74,6 +74,24 @@ Resources:
       DisableExecuteApiEndpoint: false
 
 
+#  PropertyCompositeLambda:
+#    Type: AWS::Serverless::Function
+#    Properties:
+#      CodeUri: target/lambda.zip
+#      FunctionName: PropertyCompositeLambda
+#      Handler: com.burskey.property.api.CompositeCrudHandler::handleRequest
+#      Policies:
+#        - DynamoDBCrudPolicy:
+#            TableName: !Ref PropertyTable
+#      Events:
+#        ApiEvents:
+#          Type: Api
+#          Properties:
+#            RestApiId: !Ref BasicAWSApiGateway
+#            Path: /composite/{proxy+}
+#            Method: ANY
+
+
   PropertySaveLambda:
     Type: AWS::Serverless::Function
     Properties:
